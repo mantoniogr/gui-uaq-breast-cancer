@@ -12,8 +12,8 @@ last modified: September 2011
 '''
 
 import wx
-# import cv2
-# import numpy
+import cv2
+import numpy
 
 APP_EXIT = 1
 ROI = 2
@@ -22,14 +22,15 @@ Segm = 4
 Proc = 5
 About = 6
 
-class Example(wx.Frame):
+class Window(wx.Frame):
 
     def __init__(self, *args, **kwargs):
-        super(Example, self).__init__(*args, **kwargs)
+        super(Window, self).__init__(*args, **kwargs)
         self.InitUI()
 
     def InitUI(self):
         menubar = wx.MenuBar()
+        self.image = None
 
         fileMenu = wx.Menu()
         editMenu = wx.Menu()
@@ -64,33 +65,45 @@ class Example(wx.Frame):
         menubar.Append(helpMenu, '&Help')
         self.SetMenuBar(menubar)
 
-        self.SetSize((300, 200))
+        # Window parameters
+        self.SetSize((500,60))
         self.SetTitle('UAQ Thermo Breast Cancer')
         self.Centre()
         self.Show(True)
+        # Window parameters
 
     def OnQuit(self, e):
         self.Close()
 
     def OnNew(self, e):
-        self.Close()
+        cv2.destroyAllWindows()
+
+        openFileDialog = wx.FileDialog(self, "Open", "", "",
+                                       "Image files (*.png)|*.png",
+                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        openFileDialog.ShowModal()
+        path = openFileDialog.GetPath()
+        openFileDialog.Destroy()
+        self.image = cv2.imread(path)
+        cv2.imshow("Image", self.image)
 
     def OnOpen(self, e):
         openFileDialog = wx.FileDialog(self, "Open", "", "",
                                        "Image files (*.png)|*.png",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
-        openFileDialog.GetPath()
+        path = openFileDialog.GetPath()
         openFileDialog.Destroy()
-        # image = cv2.imread(path)
-        # cv2.imshow("Test", image)
+        self.image = cv2.imread(path)
+        cv2.imshow("Image", self.image)
 
     def OnSave(self, e):
         saveFileDialog = wx.FileDialog(self, "Save As", "", "",
-                                       "Python files (*.py)|*.py",
+                                       "Image files (*.png)|*.png",
                                        wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         saveFileDialog.ShowModal()
-        saveFileDialog.GetPath()
+        path = saveFileDialog.GetPath()
+        cv2.imwrite(path, self.image)
         saveFileDialog.Destroy()
 
     def AboutMessage(self, e):
@@ -99,9 +112,9 @@ class Example(wx.Frame):
             'Info', wx.OK)
 
 def main():
-    ex = wx.App()
-    Example(None)
-    ex.MainLoop()
+    app = wx.App()
+    Window(None)
+    app.MainLoop()
 
 if __name__ == '__main__':
     main()
