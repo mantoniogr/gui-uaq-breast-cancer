@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 '''
-ZetCode wxPython tutorial
+UAQ Thermo Breast Cancer
 
-This example shows a simple menu.
-
-author: Jan Bodnar
-website: www.zetcode.com
-last modified: September 2011
+author: Marco Garduno
+website:
+last modified: August 2018
 '''
 
 import wx
@@ -21,6 +19,7 @@ TH = 3
 Segm = 4
 Proc = 5
 About = 6
+Termo = 7
 
 class Window(wx.Frame):
 
@@ -42,8 +41,10 @@ class Window(wx.Frame):
         fileMenu.Append(wx.ID_SAVE, '&Save')
         fileMenu.AppendSeparator()
         qmi = wx.MenuItem(fileMenu, APP_EXIT, '&Quit\tCtrl+Q')
+        #qmi.SetBitmap(wx.Bitmap('close_red.png'))
         fileMenu.Append(qmi)
 
+        editMenu.Append(ROI, '&Thermogram')
         editMenu.Append(ROI, '&ROI')
         editMenu.Append(TH, '&Threshold')
         editMenu.Append(Segm, '&Segmentation')
@@ -58,6 +59,9 @@ class Window(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSave, id=wx.ID_SAVE)
 
         self.Bind(wx.EVT_MENU, self.AboutMessage, id=About)
+
+        self.Bind(wx.EVT_MENU, self.OnThermogram, id=Termo)
+        self.Bind(wx.EVT_MENU, self.OnProcess, id=Proc)
 
         menubar.Append(fileMenu, '&File')
         menubar.Append(editMenu, '&Edit')
@@ -83,9 +87,10 @@ class Window(wx.Frame):
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         path = openFileDialog.GetPath()
+        if path:
+            self.image = cv2.imread(path)
+            cv2.imshow("Image", self.image)
         openFileDialog.Destroy()
-        self.image = cv2.imread(path)
-        cv2.imshow("Image", self.image)
 
     def OnOpen(self, e):
         openFileDialog = wx.FileDialog(self, "Open", "", "",
@@ -93,9 +98,10 @@ class Window(wx.Frame):
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         path = openFileDialog.GetPath()
+        if path:
+            self.image = cv2.imread(path)
+            cv2.imshow("Image", self.image)
         openFileDialog.Destroy()
-        self.image = cv2.imread(path)
-        cv2.imshow("Image", self.image)
 
     def OnSave(self, e):
         saveFileDialog = wx.FileDialog(self, "Save As", "", "",
@@ -106,10 +112,40 @@ class Window(wx.Frame):
         cv2.imwrite(path, self.image)
         saveFileDialog.Destroy()
 
+    def OnProcess(self, e):
+        thresh1, self.image = cv2.threshold(self.image, 127, 255, cv2.THRESH_BINARY)
+        cv2.imshow("Image", self.image)
+
+    def OnThermogram(self, e):
+        #thresh1, self.image = cv2.threshold(self.image, 127, 255, cv2.THRESH_BINARY)
+        #cv2.imshow("Image", self.image)
+        thermo = self.Thermogram(None, title='Thermogram')
+        thermo.ShowModal()
+        thermo.Destroy()
+
     def AboutMessage(self, e):
         wx.MessageBox(
             'UAQ Thermo Breast Cancer \n Marco Garduño \n mgarduno01@alumnos.uaq.mx',
             'Info', wx.OK)
+
+class Thermogram(wx.Frame):
+    def __init__(self, *args, **kw):
+        super(Thrmogram, self).__init__(*args, **kw)
+        self.InitUI()
+
+    def InitUI(self):
+        ID_DEPTH = wx.NewId()
+
+        tb = self.CreateToolBar()
+        tb.AddLabelTool(id=ID_DEPTH, label='', bitmap=wx.Bitmap('color.png'))
+
+        tb.Realize()
+
+        self.Bind(wx.EVT_TOOL, self.OnChangeDepth, id=ID_DEPTH)
+        self.SetSize((300, 200))
+        self.SetTitle('Custom dialog')
+        self.Centre()
+        self.Show(True)
 
 def main():
     app = wx.App()
