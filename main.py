@@ -21,10 +21,54 @@ Proc = 5
 About = 6
 Termo = 7
 
-class Window(wx.Frame):
+class Thermogram(wx.Dialog):
+    def __init__(self, *args, **kw):
+        super(Thermogram, self).__init__(*args, **kw)
+        self.InitUI()
+        self.SetSize((250, 200))
+        self.SetTitle("Thermogram")
+
+    def InitUI(self):
+        pnl = wx.Panel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+
+        sb = wx.StaticBox(pnl, label='Colors')
+        sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
+        sbs.Add(wx.RadioButton(pnl, label='256 Colors',
+            style=wx.RB_GROUP))
+        sbs.Add(wx.RadioButton(pnl, label='16 Colors'))
+        sbs.Add(wx.RadioButton(pnl, label='2 Colors'))
+
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox1.Add(wx.RadioButton(pnl, label='Custom'))
+        hbox1.Add(wx.TextCtrl(pnl), flag=wx.LEFT, border=5)
+        sbs.Add(hbox1)
+
+        pnl.SetSizer(sbs)
+
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        okButton = wx.Button(self, label='Ok')
+        closeButton = wx.Button(self, label='Close')
+        hbox2.Add(okButton)
+        hbox2.Add(closeButton, flag=wx.LEFT, border=5)
+
+        vbox.Add(pnl, proportion=1,
+            flag=wx.ALL|wx.EXPAND, border=5)
+        vbox.Add(hbox2,
+            flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=10)
+
+        self.SetSizer(vbox)
+
+        okButton.Bind(wx.EVT_BUTTON, self.OnClose)
+        closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+
+    def OnClose(self, e):
+        self.Destroy()
+
+class Example(wx.Frame):
 
     def __init__(self, *args, **kwargs):
-        super(Window, self).__init__(*args, **kwargs)
+        super(Example, self).__init__(*args, **kwargs)
         self.InitUI()
 
     def InitUI(self):
@@ -44,7 +88,7 @@ class Window(wx.Frame):
         #qmi.SetBitmap(wx.Bitmap('close_red.png'))
         fileMenu.Append(qmi)
 
-        editMenu.Append(ROI, '&Thermogram')
+        editMenu.Append(Termo, '&Thermogram')
         editMenu.Append(ROI, '&ROI')
         editMenu.Append(TH, '&Threshold')
         editMenu.Append(Segm, '&Segmentation')
@@ -117,9 +161,7 @@ class Window(wx.Frame):
         cv2.imshow("Image", self.image)
 
     def OnThermogram(self, e):
-        #thresh1, self.image = cv2.threshold(self.image, 127, 255, cv2.THRESH_BINARY)
-        #cv2.imshow("Image", self.image)
-        thermo = self.Thermogram(None, title='Thermogram')
+        thermo = Thermogram(None, title='Thermogram')
         thermo.ShowModal()
         thermo.Destroy()
 
@@ -128,29 +170,10 @@ class Window(wx.Frame):
             'UAQ Thermo Breast Cancer \n Marco Garduño \n mgarduno01@alumnos.uaq.mx',
             'Info', wx.OK)
 
-class Thermogram(wx.Frame):
-    def __init__(self, *args, **kw):
-        super(Thrmogram, self).__init__(*args, **kw)
-        self.InitUI()
-
-    def InitUI(self):
-        ID_DEPTH = wx.NewId()
-
-        tb = self.CreateToolBar()
-        tb.AddLabelTool(id=ID_DEPTH, label='', bitmap=wx.Bitmap('color.png'))
-
-        tb.Realize()
-
-        self.Bind(wx.EVT_TOOL, self.OnChangeDepth, id=ID_DEPTH)
-        self.SetSize((300, 200))
-        self.SetTitle('Custom dialog')
-        self.Centre()
-        self.Show(True)
-
 def main():
-    app = wx.App()
-    Window(None)
-    app.MainLoop()
+    ex = wx.App()
+    Example(None)
+    ex.MainLoop()
 
 if __name__ == '__main__':
     main()
