@@ -25,42 +25,68 @@ class Thermogram(wx.Dialog):
     def __init__(self, *args, **kw):
         super(Thermogram, self).__init__(*args, **kw)
         self.InitUI()
-        self.SetSize((250, 200))
-        self.SetTitle("Thermogram")
 
     def InitUI(self):
+        self.SetSize((200, 150))
+        # self.SetTitle("Thermogram")
+
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
+        self.tx1 = wx.TextCtrl(pnl)
+        self.tx2 = wx.TextCtrl(pnl)
 
-        sb = wx.StaticBox(pnl, label='Colors')
+        self.tx1.SetValue("20.0")
+        self.tx2.SetValue("25.0")
+
+        sb = wx.StaticBox(pnl, label='Thermogram Info')
         sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
-        sbs.Add(wx.RadioButton(pnl, label='256 Colors',
-            style=wx.RB_GROUP))
-        sbs.Add(wx.RadioButton(pnl, label='16 Colors'))
-        sbs.Add(wx.RadioButton(pnl, label='2 Colors'))
 
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox1.Add(wx.RadioButton(pnl, label='Custom'))
-        hbox1.Add(wx.TextCtrl(pnl), flag=wx.LEFT, border=5)
+        hbox1.Add(wx.StaticText(pnl, label='T min'))
+        hbox1.Add(self.tx1, flag=wx.LEFT, border=10)
+        hbox1.Add(wx.StaticText(pnl, label=' ° C'))
         sbs.Add(hbox1)
+
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2.Add(wx.StaticText(pnl, label='T max'))
+        hbox2.Add(self.tx2, flag=wx.LEFT, border=9)
+        hbox2.Add(wx.StaticText(pnl, label=' ° C'))
+        sbs.Add(hbox2)
 
         pnl.SetSizer(sbs)
 
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        okButton = wx.Button(self, label='Ok')
+        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+        okButton = wx.Button(self, label='Accept')
         closeButton = wx.Button(self, label='Close')
-        hbox2.Add(okButton)
-        hbox2.Add(closeButton, flag=wx.LEFT, border=5)
+        hbox3.Add(okButton)
+        hbox3.Add(closeButton, flag=wx.LEFT, border=5)
 
         vbox.Add(pnl, proportion=1,
             flag=wx.ALL|wx.EXPAND, border=5)
-        vbox.Add(hbox2,
-            flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=10)
+        vbox.Add(hbox3,
+            flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=5)
 
         self.SetSizer(vbox)
 
-        okButton.Bind(wx.EVT_BUTTON, self.OnClose)
+        okButton.Bind(wx.EVT_BUTTON, self.OnAccept)
         closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+
+    def OnAccept(self, e):
+        t_min = self.tx1.GetValue()
+        t_max = self.tx2.GetValue()
+
+        if(t_min > t_max):
+            print "Error"
+        elif(float(t_min) < 0):
+            print "Error"
+        else:
+            file = open("config.txt","w")
+            file.write("T_MIN\n")
+            file.write(str(t_min)+"\n")
+            file.write("T_MAX\n")
+            file.write(str(t_max))
+            file.close()
+            self.Destroy()
 
     def OnClose(self, e):
         self.Destroy()
@@ -72,6 +98,13 @@ class Example(wx.Frame):
         self.InitUI()
 
     def InitUI(self):
+        # Configuration File .txt
+        self.file = open("config.txt","r")
+        data = self.file.readlines()
+        self.file.close()
+        self.t_min = float(data[1])
+        self.t_max = float(data[3])
+
         menubar = wx.MenuBar()
         self.image = None
 
