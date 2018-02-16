@@ -4,14 +4,18 @@
 '''
 UAQ Thermo Breast Cancer
 
+main.py
+
 author: Marco Garduno
-website:
-last modified: August 2018
+mail: mgarduno01@alumnos.uaq.mx
+last modified: February 2018
 '''
 
 import wx
 import cv2
-import numpy
+import numpy as np
+
+import functions as f
 
 APP_EXIT = 1
 ROI = 2
@@ -20,6 +24,65 @@ Segm = 4
 Proc = 5
 About = 6
 Termo = 7
+ID_ROI = 8
+
+class Roi(wx.Dialog):
+    def __init__(self, *args, **kw):
+        super(Roi, self).__init__(*args, **kw)
+        self.InitUI()
+
+    def InitUI(self):
+        self.SetSize((250, 150))
+
+        # Panel
+        pnl = wx.Panel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+
+        self.sp1 = wx.SpinCtrl(pnl, size=(90,-1), min=1, max=120)
+        self.sp2 = wx.SpinCtrl(pnl, size=(90,-1), min=1, max=120)
+        self.sp3 = wx.SpinCtrl(pnl, size=(90,-1), min=1, max=120)
+        self.sp4 = wx.SpinCtrl(pnl, size=(90,-1), min=1, max=120)
+
+        sb = wx.StaticBox(pnl, label='ROI Info')
+        sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
+
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox1.Add(wx.StaticText(pnl, label='X1'))
+        hbox1.Add(self.sp1, flag=wx.LEFT, border=10)
+        hbox1.Add(wx.StaticText(pnl, label=' X2'))
+        hbox1.Add(self.sp2, flag=wx.LEFT, border=10)
+        sbs.Add(hbox1)
+
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2.Add(wx.StaticText(pnl, label='Y1'))
+        hbox2.Add(self.sp3, flag=wx.LEFT, border=10)
+        hbox2.Add(wx.StaticText(pnl, label=' Y2'))
+        hbox2.Add(self.sp4, flag=wx.LEFT, border=10)
+        sbs.Add(hbox2)
+
+        pnl.SetSizer(sbs)
+
+        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+        okButton = wx.Button(self, label='Accept')
+        closeButton = wx.Button(self, label='Close')
+        hbox3.Add(okButton)
+        hbox3.Add(closeButton, flag=wx.LEFT, border=5)
+
+        vbox.Add(pnl, proportion=1,
+            flag=wx.ALL|wx.EXPAND, border=5)
+        vbox.Add(hbox3,
+            flag=wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, border=5)
+
+        self.SetSizer(vbox)
+
+        okButton.Bind(wx.EVT_BUTTON, self.OnAccept)
+        closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+
+    def OnAccept(self, e):
+        self.Destroy()
+
+    def OnClose(self, e):
+        self.Destroy()
 
 class Thermogram(wx.Dialog):
     def __init__(self, *args, **kw):
@@ -28,15 +91,22 @@ class Thermogram(wx.Dialog):
 
     def InitUI(self):
         self.SetSize((200, 150))
-        # self.SetTitle("Thermogram")
 
+        # Configuration File .txt
+        self.file = open("config.txt","r")
+        data = self.file.readlines()
+        self.file.close()
+        self.t_min = float(data[1])
+        self.t_max = float(data[3])
+
+        # Panel
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.tx1 = wx.TextCtrl(pnl)
         self.tx2 = wx.TextCtrl(pnl)
 
-        self.tx1.SetValue("20.0")
-        self.tx2.SetValue("25.0")
+        self.tx1.SetValue(str(float(self.t_min)))
+        self.tx2.SetValue(str(float(self.t_max)))
 
         sb = wx.StaticBox(pnl, label='Thermogram Info')
         sbs = wx.StaticBoxSizer(sb, orient=wx.VERTICAL)
@@ -72,21 +142,23 @@ class Thermogram(wx.Dialog):
         closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
 
     def OnAccept(self, e):
-        t_min = self.tx1.GetValue()
-        t_max = self.tx2.GetValue()
+        self.t_min = self.tx1.GetValue()
+        self.t_max = self.tx2.GetValue()
 
-        if(t_min > t_max):
+        if(self.t_min > self.t_max):
             print "Error"
-        elif(float(t_min) < 0):
+        elif(float(self.t_min) < 0):
             print "Error"
         else:
             file = open("config.txt","w")
             file.write("T_MIN\n")
-            file.write(str(t_min)+"\n")
+            file.write(str(self.t_min)+"\n")
             file.write("T_MAX\n")
-            file.write(str(t_max))
+            file.write(str(self.t_max))
             file.close()
             self.Destroy()
+
+            return self.t_min, self.t_max
 
     def OnClose(self, e):
         self.Destroy()
@@ -98,15 +170,18 @@ class Example(wx.Frame):
         self.InitUI()
 
     def InitUI(self):
+        self.image = None
+        self.path = None
+
         # Configuration File .txt
         self.file = open("config.txt","r")
         data = self.file.readlines()
         self.file.close()
+
         self.t_min = float(data[1])
         self.t_max = float(data[3])
 
         menubar = wx.MenuBar()
-        self.image = None
 
         fileMenu = wx.Menu()
         editMenu = wx.Menu()
@@ -118,11 +193,10 @@ class Example(wx.Frame):
         fileMenu.Append(wx.ID_SAVE, '&Save')
         fileMenu.AppendSeparator()
         qmi = wx.MenuItem(fileMenu, APP_EXIT, '&Quit\tCtrl+Q')
-        #qmi.SetBitmap(wx.Bitmap('close_red.png'))
         fileMenu.Append(qmi)
 
         editMenu.Append(Termo, '&Thermogram')
-        editMenu.Append(ROI, '&ROI')
+        editMenu.Append(ID_ROI, '&ROI')
         editMenu.Append(TH, '&Threshold')
         editMenu.Append(Segm, '&Segmentation')
 
@@ -138,6 +212,7 @@ class Example(wx.Frame):
         self.Bind(wx.EVT_MENU, self.AboutMessage, id=About)
 
         self.Bind(wx.EVT_MENU, self.OnThermogram, id=Termo)
+        self.Bind(wx.EVT_MENU, self.OnRoi, id=ID_ROI)
         self.Bind(wx.EVT_MENU, self.OnProcess, id=Proc)
 
         menubar.Append(fileMenu, '&File')
@@ -163,9 +238,9 @@ class Example(wx.Frame):
                                        "Image files (*.png)|*.png",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
-        path = openFileDialog.GetPath()
-        if path:
-            self.image = cv2.imread(path)
+        self.path = openFileDialog.GetPath()
+        if self.path:
+            self.image = cv2.imread(self.path)
             cv2.imshow("Image", self.image)
         openFileDialog.Destroy()
 
@@ -174,9 +249,9 @@ class Example(wx.Frame):
                                        "Image files (*.png)|*.png",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
-        path = openFileDialog.GetPath()
-        if path:
-            self.image = cv2.imread(path)
+        self.path = openFileDialog.GetPath()
+        if self.path:
+            self.image = cv2.imread(self.path, 0)
             cv2.imshow("Image", self.image)
         openFileDialog.Destroy()
 
@@ -185,18 +260,35 @@ class Example(wx.Frame):
                                        "Image files (*.png)|*.png",
                                        wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         saveFileDialog.ShowModal()
-        path = saveFileDialog.GetPath()
-        cv2.imwrite(path, self.image)
+        self.path = saveFileDialog.GetPath()
+        cv2.imwrite(self.path, self.image)
         saveFileDialog.Destroy()
 
     def OnProcess(self, e):
         thresh1, self.image = cv2.threshold(self.image, 127, 255, cv2.THRESH_BINARY)
         cv2.imshow("Image", self.image)
 
+    def OnRoi(self, e):
+        # mouse callback function
+        def draw_circle(event, x, y, flags, param):
+            if event == cv2.EVENT_LBUTTONDBLCLK:
+                cv2.circle(self.image, (x,y), 50, (255), 3)
+
+        cv2.setMouseCallback('Image', draw_circle)
+        cv2.imshow('Image',self.image)
+        while(1):
+            cv2.imshow('Image',self.image)
+            if cv2.waitKey(20) & 0xFF == 27:
+                break
+
     def OnThermogram(self, e):
-        thermo = Thermogram(None, title='Thermogram')
-        thermo.ShowModal()
-        thermo.Destroy()
+        if self.path:
+            thermo = Thermogram(self, title='Thermogram')
+            thermo.ShowModal()
+            thermo.Destroy()
+
+            t_r = f.thermogram(self.image, self.t_max, self.t_min)
+            np.savetxt(self.path[0:len(self.path)-4] + ".txt", t_r, delimiter=' ', fmt='%2.4f')
 
     def AboutMessage(self, e):
         wx.MessageBox(
