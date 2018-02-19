@@ -4,7 +4,7 @@
 '''
 UAQ Thermo Breast Cancer
 
-main.py
+functions.py
 
 author: Marco Garduno
 mail: mgarduno01@alumnos.uaq.mx

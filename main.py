@@ -14,6 +14,7 @@ last modified: February 2018
 import wx
 import cv2
 import numpy as np
+import math
 
 import functions as f
 
@@ -270,15 +271,21 @@ class Example(wx.Frame):
 
     def OnRoi(self, e):
         # mouse callback function
+        image_aux = np.copy(self.image)
+
         def draw_circle(event, x, y, flags, param):
             if event == cv2.EVENT_LBUTTONDBLCLK:
-                cv2.circle(self.image, (x,y), 50, (255), 3)
+                cv2.circle(self.image, (x,y), 25, (255), 3)
 
         cv2.setMouseCallback('Image', draw_circle)
         cv2.imshow('Image',self.image)
+
         while(1):
             cv2.imshow('Image',self.image)
-            if cv2.waitKey(20) & 0xFF == 27:
+            k = cv2.waitKey(33)
+            if k == 27:
+                self.image = np.copy(image_aux)
+            if k == 13 or k == 32:
                 break
 
     def OnThermogram(self, e):
