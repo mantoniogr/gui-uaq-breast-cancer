@@ -237,6 +237,8 @@ class Example(wx.Frame):
                 cv2.circle(self.image, refPt[0], r_dist, (255), 2)
                 cv2.circle(self.image_black, refPt[0], r_dist, (255), -1)
 
+        self.statusbar.SetStatusText('Seleccionar ROI')
+
         image_aux = np.copy(self.image)
         cv2.setMouseCallback('Image', draw_circle)
         cv2.imshow('Image', self.image)
@@ -244,6 +246,7 @@ class Example(wx.Frame):
         while(1):
             cv2.imshow('Image', self.image)
             k = cv2.waitKey(33)
+            self.statusbar.SetStatusText('Enter/Espacio para aceptar, Esc para empezar de nuevo')
             if k == 27:
                 self.image = np.copy(image_aux)
             if k == 13 or k == 32:
@@ -252,16 +255,32 @@ class Example(wx.Frame):
                 break
 
     def OnThreshold(self, e):
+        def nothing(x):
+            pass
+
         self.statusbar.SetStatusText('Working...')
 
         th, image_umbral = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         image_umbral = m.closing(image_umbral, 3)
         self.image = f.crop_roi(self.image_original, image_umbral)
+        cv2.imshow('Image', self.image)
 
-        # minima = m.minima(self.image)
-        watershed, waterlines = m.watershed(self.image)
+        cv2.createTrackbar('Umbral', 'Image', 0, 255, nothing)
 
-        cv2.imshow('Image', watershed)
+        while(1):
+            k = cv2.waitKey(33)
+            if k == 27:
+                break
+
+            value = cv2.getTrackbarPos('Umbral','Image')
+            th, image_umbral = cv2.threshold(self.image, value, 255, cv2.THRESH_BINARY)
+            res = cv2.add(self.image, image_umbral)
+            cv2.imshow('Image', res)
+
+        # th, image_umbral = cv2.threshold(self.image, 200, 255, cv2.THRESH_BINARY_INV)
+        # self.image = f.crop_roi(self.image, image_umbral)
+        #
+        # watershed, waterlines = m.watershed(self.image)
 
         self.statusbar.SetStatusText('Terminado')
 
