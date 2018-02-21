@@ -60,3 +60,32 @@ def crop_roi(image_original, image_black):
                 image_black[j][i] = image_original[j][i]
 
     return image_black
+
+def chest_removal(image_original):
+    shape = image_original.shape
+    img = np.copy(image_original)
+
+    for j in range(0, shape[0]-1):
+        for i in range(0, shape[1]-1):
+            if img[j][i] == 255 and img[j+1][i] != 255 :
+                img[j+1][i] = 255
+
+    list_p = []
+
+    for i in range(0, shape[1]-1):
+        if img[shape[0]-1][i] == 0 and img[shape[0]-1][i+1] == 255:
+            list_p.append(i)
+        if img[shape[0]-1][i] == 255 and img[shape[0]-1][i+1] == 0:
+            list_p.append(i)
+
+    print list_p
+
+    for j in range(0, shape[0]):
+        for i in range(0, shape[1]-1):
+            if img[j][i] == 255 and i >= list_p[3]:
+                img[j][i+1] = 255
+        for i in range(shape[1]-1, 0, -1):
+            if img[j][i] == 255 and i <= list_p[0]:
+                img[j][i-1] = 255
+
+    return img

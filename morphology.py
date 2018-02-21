@@ -96,6 +96,28 @@ def geodesic_dilation(I, J):
 
     return J
 
+def geodesic_erosion(I, J):
+
+    I = f.negative_gray(I)
+    J = f.negative_gray(J)
+
+    J = geodesic_dilation(I,J)
+
+    I = f.negative_gray(I)
+    J = f.negative_gray(J)
+
+    return J
+
+def closing_by_reconstruction(map, n):
+    img_auxiliar = np.copy(map)
+    Y = np.copy(map)
+
+    Y = dilation(map, n)
+    dilatada = np.copy(Y)
+    J = geodesic_erosion(img_auxiliar, Y)
+
+    return J
+
 def maxima(img):
     height, width =  img.shape
     img_auxiliar = np.copy(img)

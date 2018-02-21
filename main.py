@@ -265,7 +265,7 @@ class Example(wx.Frame):
         self.image = f.crop_roi(self.image_original, image_umbral)
         cv2.imshow('Image', self.image)
 
-        cv2.createTrackbar('Umbral', 'Image', 0, 255, nothing)
+        cv2.createTrackbar('Umbral', 'Image', 200, 255, nothing)
 
         while(1):
             k = cv2.waitKey(33)
@@ -274,14 +274,18 @@ class Example(wx.Frame):
 
             value = cv2.getTrackbarPos('Umbral','Image')
             th, image_umbral = cv2.threshold(self.image, value, 255, cv2.THRESH_BINARY)
-            res = cv2.add(self.image, image_umbral)
-            cv2.imshow('Image', res)
+
+            image_umbral = f.chest_removal(image_umbral)
+            # image_umbral = cv2.add(self.image, image_umbral)
+
+            cv2.imshow('Image', image_umbral)
 
         # th, image_umbral = cv2.threshold(self.image, 200, 255, cv2.THRESH_BINARY_INV)
         # self.image = f.crop_roi(self.image, image_umbral)
         #
         # watershed, waterlines = m.watershed(self.image)
 
+        # cv2.imshow('Image', image_umbral)
         self.statusbar.SetStatusText('Terminado')
 
     def AboutMessage(self, e):
