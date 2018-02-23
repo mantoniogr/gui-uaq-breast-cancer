@@ -76,24 +76,24 @@ def chest_removal(image_original):
     shape = image_original.shape
     img = np.copy(image_original)
 
-    for j in range(0, shape[0]-1):
-        for i in range(0, shape[1]-1):
+    for j in xrange(0, shape[0]-1):
+        for i in xrange(0, shape[1]-1):
             if img[j][i] == 255 and img[j+1][i] != 255 :
                 img[j+1][i] = 255
 
     list_p = []
 
-    for i in range(0, shape[1]-1):
+    for i in xrange(0, shape[1]-1):
         if img[shape[0]-1][i] == 0 and img[shape[0]-1][i+1] == 255:
             list_p.append(i)
         if img[shape[0]-1][i] == 255 and img[shape[0]-1][i+1] == 0:
             list_p.append(i)
 
-    for j in range(0, shape[0]):
-        for i in range(0, shape[1]-1):
+    for j in xrange(0, shape[0]):
+        for i in xrange(0, shape[1]-1):
             if img[j][i] == 255 and i >= list_p[3]:
                 img[j][i+1] = 255
-        for i in range(shape[1]-1, 0, -1):
+        for i in xrange(shape[1]-1, 0, -1):
             if img[j][i] == 255 and i-1 <= list_p[0]:
                 img[j][i-1] = 255
 
@@ -106,13 +106,25 @@ def analysis(image_original, thermogram):
     x_max = 0
     x_min = 10000000
 
-    for j in range(0, shape[0]):
-        for i in range(0, shape[1]):
+    for j in xrange(0, shape[0]):
+        for i in xrange(0, shape[1]):
             if image_umbral[j][i] == 255:
                 if i > x_max:
                     x_max = i
                 if i < x_min:
                     x_min = i
+
+    # for i in xrange(0, int(shape[1]/2)):
+    #     for j in xrange(0, shape[0]):
+    #         if image_umbral[j][i] == 255:
+    #             x_min = i
+    #             break
+    #
+    # for i in xrange(int(shape[1]/2), shape[1], -1):
+    #     for j in xrange(0, shape[0]):
+    #         if image_umbral[j][i] == 255:
+    #             x_max = i
+    #             break
 
     mid_x = int((x_max+x_min)/2)
     max_value = np.amax(image_original)
@@ -120,9 +132,9 @@ def analysis(image_original, thermogram):
     list_t = []
     list_p_r = []
 
-    for k in range(0, max_value):
-        for j in range(0, shape[0]):
-            for i in range(0, mid_x):
+    for k in xrange(0, max_value):
+        for j in xrange(0, shape[0]):
+            for i in xrange(0, mid_x):
                 if image_original[j][i] == k:
                     list_t.append(thermogram[j][i])
         list_p_r.append(sum(list_t)/len(list_t))
@@ -132,9 +144,9 @@ def analysis(image_original, thermogram):
     list_t = []
     list_p_l = []
 
-    for k in range(0, max_value):
-        for j in range(0, shape[0]):
-            for i in range(mid_x, shape[1]):
+    for k in xrange(0, max_value):
+        for j in xrange(0, shape[0]):
+            for i in xrange(mid_x, shape[1]):
                 if image_original[j][i] == k:
                     list_t.append(thermogram[j][i])
         list_p_l.append(sum(list_t)/len(list_t))
