@@ -285,12 +285,16 @@ class Example(wx.Frame):
             if k == 27:
                 self.image = np.copy(image_aux)
             if k == 13 or k == 32:
-                self.image = fc.crop_roi(self.image_original, self.image_black)
+                image_crop = fc.crop_roi(self.image_original, self.image_black)
+                self.image = np.asarray(image_crop)
 
                 self.statusbar.SetStatusText('Eliminando fondo...')
                 th, image_umbral = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-                image_umbral = mc.closing(image_umbral, 3)
-                self.image = fc.crop_roi(self.image_original, image_umbral)
+                image_closing = mc.closing(image_umbral, 3)
+                image_umbral = np.asarray(image_closing)
+                image_crop = fc.crop_roi(self.image_original, image_umbral)
+                self.image = np.asarray(image_crop)
+
                 cv2.imshow('Image', self.image)
                 self.statusbar.SetStatusText('Listo')
 
@@ -317,9 +321,13 @@ class Example(wx.Frame):
                 break
 
         self.image = image_add
-        image_umbral = fc.chest_removal(image_umbral)
+        image_chest = fc.chest_removal(image_umbral)
+        image_umbral = np.asarray(image_chest)
+
         self.image = cv2.add(self.image, image_umbral)
-        self.image = fc.threshold_2(self.image, 255)
+
+        image_threshold = fc.threshold_2(self.image, 255)
+        self.image = np.asarray(image_threshold)
 
         cv2.destroyWindow("Image")
         cv2.imshow('Image', self.image)
@@ -328,14 +336,16 @@ class Example(wx.Frame):
 
     def OnSegmentation(self, e):
         self.statusbar.SetStatusText('Realizando segmentacion...')
-        self.image, waterlines = m.watershed(self.image)
+        # self.image, waterlines = mc.watershed(self.image)
+        watershed = mc.watershed(self.image)
+        self.image = np.asarray(watershed)
         cv2.imshow('Image', self.image)
         self.statusbar.SetStatusText('Listo')
 
     def OnAnalysis(self, e):
         self.statusbar.SetStatusText('Analizando imagen...')
         shape = self.image.shape
-        t_left, t_right = f.analysis(self.image, self.t_r)
+        t_left, t_right = fc.analysis(self.image, self.t_r)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(self.image, " %.2f C" % t_left, (shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
         cv2.putText(self.image, " %.2f C" % t_right , (2*shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
