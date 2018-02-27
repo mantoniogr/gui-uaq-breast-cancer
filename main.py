@@ -16,6 +16,8 @@ import cv2
 import numpy as np
 import math
 
+from fpdf import FPDF
+
 import functions as f
 import functions_c as fc
 import morphology as m
@@ -28,6 +30,7 @@ ID_ROI = 4
 ID_THRES = 5
 ID_SEG = 6
 ID_ANAL = 7
+ID_RES = 8
 
 class Thermogram(wx.Dialog):
     def __init__(self, *args, **kw):
@@ -129,12 +132,16 @@ class Example(wx.Frame):
         self.t_min = float(data[1])
         self.t_max = float(data[3])
 
+        self.t_left = None
+        self.t_right = None
+
         # GUI design
         menubar = wx.MenuBar()
 
         fileMenu = wx.Menu()
         editMenu = wx.Menu()
         diagMenu = wx.Menu()
+        resMenu = wx.Menu()
         helpMenu = wx.Menu()
 
         fileMenu.Append(wx.ID_NEW, '&New')
@@ -150,6 +157,8 @@ class Example(wx.Frame):
 
         diagMenu.Append(ID_SEG, '&Segmentation')
         diagMenu.Append(ID_ANAL, '&Analysis')
+
+        resMenu.Append(ID_RES, '&Results')
 
         helpMenu.Append(ID_ABOUT, '&About')
 
@@ -167,9 +176,12 @@ class Example(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSegmentation, id=ID_SEG)
         self.Bind(wx.EVT_MENU, self.OnAnalysis, id=ID_ANAL)
 
+        self.Bind(wx.EVT_MENU, self.OnResults, id=ID_RES)
+
         menubar.Append(fileMenu, '&File')
         menubar.Append(editMenu, '&Edit')
-        menubar.Append(diagMenu, '&Diagnosis')
+        menubar.Append(diagMenu, '&Analisis')
+        menubar.Append(resMenu, '&Results')
         menubar.Append(helpMenu, '&Help')
 
         self.SetMenuBar(menubar)
@@ -191,12 +203,13 @@ class Example(wx.Frame):
 
     def OnNew(self, e):
         cv2.destroyAllWindows()
-
+        self.statusbar.SetStatusText("Seleccionar Termograma")
         openFileDialog = wx.FileDialog(self, "Open", "", "",
                                        "All files (*.png;*.jpp;)|*.png;*.jpg|PNG files (*.png)|*.png|JPEG files (*.jpg;*.jpeg)|*.jpg;*.jpeg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         self.path = openFileDialog.GetPath()
+
         if self.path:
             self.image = cv2.imread(self.path, 0)
             cv2.imshow("Image", self.image)
@@ -206,22 +219,25 @@ class Example(wx.Frame):
             self.image_black = np.zeros((shape[0], shape[1]), np.uint8)
 
             path_text = self.path[0:len(self.path)-4] + ".txt"
-            print path_text
+            # print path_text
 
             try:
                 self.t_r = np.loadtxt(path_text, delimiter=" ")
-                print "Termograma encontrado"
+                self.statusbar.SetStatusText("Termograma encontrado")
             except:
-                print "Termograma NO encontrado"
+                self.statusbar.SetStatusText("Termograma NO encontrado")
 
         openFileDialog.Destroy()
 
     def OnOpen(self, e):
+        cv2.destroyAllWindows()
+        self.statusbar.SetStatusText("Seleccionar Termograma")
         openFileDialog = wx.FileDialog(self, "Open", "", "",
                                        "All files (*.png;*.jpp;)|*.png;*.jpg|PNG files (*.png)|*.png|JPEG files (*.jpg;*.jpeg)|*.jpg;*.jpeg",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         self.path = openFileDialog.GetPath()
+        self.statusbar.SetStatusText("Seleccionar Termograma")
         if self.path:
             self.image = cv2.imread(self.path, 0)
             cv2.imshow("Image", self.image)
@@ -231,24 +247,27 @@ class Example(wx.Frame):
             self.image_black = np.zeros((shape[0], shape[1]), np.uint8)
 
             path_text = self.path[0:len(self.path)-4] + ".txt"
-            print path_text
+            # print path_text
 
             try:
                 self.t_r = np.loadtxt(path_text, delimiter=" ")
-                print "Termograma encontrado"
+                self.statusbar.SetStatusText("Termograma encontrado")
             except:
-                print "Termograma NO encontrado"
+                self.statusbar.SetStatusText("Termograma NO encontrado")
 
         openFileDialog.Destroy()
 
     def OnSave(self, e):
-        saveFileDialog = wx.FileDialog(self, "Save As", "", "",
-                                       "All files (*.png;*.jpp;)|*.png;*.jpg|PNG files (*.png)|*.png|JPEG files (*.jpg;*.jpeg)|*.jpg;*.jpeg",
-                                       wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        saveFileDialog.ShowModal()
-        self.path = saveFileDialog.GetPath()
-        cv2.imwrite(self.path, self.image)
-        saveFileDialog.Destroy()
+        if self.path != None:
+            saveFileDialog = wx.FileDialog(self, "Save As", "", "",
+                                           "All files (*.png;*.jpp;)|*.png;*.jpg|PNG files (*.png)|*.png|JPEG files (*.jpg;*.jpeg)|*.jpg;*.jpeg",
+                                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+            saveFileDialog.ShowModal()
+            self.path = saveFileDialog.GetPath()
+            cv2.imwrite(self.path, self.image)
+            saveFileDialog.Destroy()
+        else:
+            self.statusbar.SetStatusText('No hay archivo que guardar')
 
     def OnThermogram(self, e):
         if self.path:
@@ -345,11 +364,54 @@ class Example(wx.Frame):
     def OnAnalysis(self, e):
         self.statusbar.SetStatusText('Analizando imagen...')
         shape = self.image.shape
-        t_left, t_right = fc.analysis(self.image, self.t_r)
+        self.t_right, self.t_left = fc.analysis(self.image, self.t_r)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(self.image, " %.2f C" % t_left, (shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
-        cv2.putText(self.image, " %.2f C" % t_right , (2*shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(self.image, " %.2f C" % self.t_right, (shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(self.image, " %.2f C" % self.t_left , (2*shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
         cv2.imshow('Image', self.image)
+        self.statusbar.SetStatusText('Listo')
+
+        if abs(self.t_left-self.t_right) < 1:
+            wx.MessageBox('SIN HALLAZGOS', 'Mensaje', wx.OK)
+        else:
+            wx.MessageBox('DIFERENCIA DE TEMPERATURA ANORMAL', 'Warning', wx.OK | wx.ICON_WARNING)
+
+    def OnResults(self, e):
+        class PDF(FPDF):
+            def header(self):
+                self.image('images/uaq.png', 10, 8, 25)
+                self.image('images/ingenieria.png', 155, 8, 20)
+                self.image('images/enfermeria.png', 177, 8, 30)
+                self.set_font('Times', 'B', 15)
+                self.cell(80)
+                # fpdf.cell(w, h = 0, txt = '', border = 0, ln = 0, align = '', fill = False, link = '')
+                self.cell(30, 10, 'Universidad Autonoma de Queretaro', border=0, ln = 2, align='C')
+                self.cell(30, 10, 'campus San Juan del Rio', border=0, ln = 2, align='C')
+                pdf.set_font('Times', '', 12)
+                self.cell(30, 10, 'Hallazgos Termograficos', border=0, ln = 2, align='C')
+                self.ln(20)
+
+        cv2.imwrite("images/temp.png", self.image)
+        self.statusbar.SetStatusText('Generando resultados...')
+
+        pdf = PDF('P', 'mm', 'Letter')
+        pdf.add_page()
+        pdf.set_font('Times', '', 12)
+        pdf.cell(30, 10, 'Analisis de Termograma', border=0, ln = 2, align='L')
+        pdf.image('images/temp.png', x=68, y=75, w=100)
+        pdf.ln(90)
+        pdf.cell(30, 10, 'La temperatura promedio del seno derecho es de %.2f C.' % self.t_right, border=0, ln = 2, align='L')
+        pdf.cell(30, 10, 'La temperatura promedio del seno izquierdo es de %.2f C.' % self.t_left, border=0, ln = 2, align='L')
+        pdf.ln(20)
+        pdf.cell(30, 10, 'El diferencial de temperaturas de es de %.2f C.' % abs(self.t_left-self.t_right), border=0, ln = 2, align='L')
+        pdf.ln(20)
+        if abs(self.t_left-self.t_right) < 1:
+            pdf.cell(30, 10, "SIN HALLAZGOS", border=0, ln = 2, align='L')
+        else:
+            pdf.cell(30, 10, "DIFERENCIA DE TEMPERATURA ANORMAL", border=0, ln = 2, align='L')
+            pdf.ln(20)
+        pdf.output(self.path[0:len(self.path)-4] + ".pdf", 'F')
+
         self.statusbar.SetStatusText('Listo')
 
     def AboutMessage(self, e):
