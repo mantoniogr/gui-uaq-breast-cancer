@@ -180,6 +180,8 @@ cpdef unsigned char[:,:] watershed(unsigned char [:,:] ime):
 # def watershed(ime):
     cdef int i, j, w, h, k, l, m, n
 
+    # ime = fc.negative_gray(ime)
+
     h = ime.shape[0]
     w = ime.shape[1]
 
@@ -225,6 +227,8 @@ cpdef unsigned char[:,:] watershed(unsigned char [:,:] ime):
                                 imwl[k, l] = imwl[coord[0],coord[1]]
                                 fifoj[ime[k, l]].append([k, l])
         i = i + 1
+
+    # ims = fc.negative_gray(ims)
 
     # return ims, imwl
     return ims

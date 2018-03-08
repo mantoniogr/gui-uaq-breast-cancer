@@ -32,6 +32,10 @@ ID_SEG = 6
 ID_ANAL = 7
 ID_RES = 8
 
+cropping = False
+refPt = []
+sel_rect_endpoint = []
+
 class Thermogram(wx.Dialog):
     def __init__(self, *args, **kw):
         super(Thermogram, self).__init__(*args, **kw)
@@ -284,13 +288,26 @@ class Example(wx.Frame):
     def OnRoi(self, e):
         def draw_circle(event, x, y, flags, param):
             global refPt
+            global sel_rect_endpoint
+            global cropping
+            global r_dist
+
+            r_dist = 0
+
             if event == cv2.EVENT_LBUTTONDOWN:
                 refPt = [(x, y)]
+                cropping = True
             elif event == cv2.EVENT_LBUTTONUP:
                 refPt.append((x, y))
                 r_dist =  int(math.sqrt((refPt[0][0]-refPt[1][0])**2 + (refPt[0][1]-refPt[1][1])**2))
                 cv2.circle(self.image, refPt[0], r_dist, (255), 2)
                 cv2.circle(self.image_black, refPt[0], r_dist, (255), -1)
+                cropping = False
+                r_dist = 0
+                refPt = []
+                sel_rect_endpoint = []
+            elif event == cv2.EVENT_MOUSEMOVE and cropping:
+                sel_rect_endpoint = [(x, y)]
 
         self.statusbar.SetStatusText('Enter/Espacio para aceptar, Esc para empezar de nuevo')
 
@@ -299,7 +316,14 @@ class Example(wx.Frame):
         cv2.imshow('Image', self.image)
 
         while(1):
-            cv2.imshow('Image', self.image)
+            if not cropping:
+                cv2.imshow('Image', self.image)
+            elif cropping and sel_rect_endpoint:
+                rect_cpy = self.image.copy()
+                r_dist =  int(math.sqrt((refPt[0][0]-sel_rect_endpoint[0][0])**2 + (refPt[0][1]-sel_rect_endpoint[0][1])**2))
+                cv2.circle(rect_cpy, refPt[0], r_dist, (255), 2)
+                cv2.imshow('Image', rect_cpy)
+
             k = cv2.waitKey(33)
             if k == 27:
                 self.image = np.copy(image_aux)
