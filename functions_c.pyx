@@ -7,14 +7,16 @@ UAQ Thermo Breast Cancer
 functions.pyx
 
 author: Marco Garduno
-mail: mgarduno01@alumnos.uaq.mx
-last modified: February 2018
+email: mgarduno01@alumnos.uaq.mx
+last modified: 14 March 2018
 '''
 
 import cv2
 import math
 import numpy as np
 import cython
+
+import morphology_c as mc
 
 # Example
 @cython.boundscheck(False)
@@ -169,56 +171,52 @@ cpdef unsigned char[:,:] chest_removal(unsigned char [:,:] image_original):
     return img
 
 @cython.boundscheck(False)
-cpdef double[:] analysis( unsigned char [:, :] image_original, double [:, :] thermogram):
+cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :] thermogram):
 # def analysis(image_original, thermogram):
     cdef int i, j, w, h
-    cdef double output[2]
+    cdef double avg_temp[2]
 
     h = image_original.shape[0]
     w = image_original.shape[1]
 
     th, image_umbral = cv2.threshold(np.asarray(image_original), 1, 255, cv2.THRESH_BINARY)
     image_umbral = np.asarray(image_umbral)
+    image_labeled = mc.etiquetado(image_umbral)
 
-    cdef int x_max = 0
-    cdef int x_min = 10000000
+    th, image_r = cv2.threshold(np.asarray(image_labeled), 1, 1, cv2.THRESH_BINARY)
+    th, image_l = cv2.threshold(np.asarray(image_labeled), 2, 2, cv2.THRESH_BINARY)
+    cv2.imwrite("1.png", image_r)
+    cv2.imwrite("2.png", image_l)
 
-    for j in xrange(0, h):
-        for i in xrange(0, w):
-            if image_umbral[j, i] == 255:
-                if i > x_max:
-                    x_max = i
-                if i < x_min:
-                    x_min = i
+    return avg_temp
 
-    cdef int mid_x = int((x_max+x_min)/2)
-    max_value = np.amax(image_original)
+@cython.boundscheck(False)
+cpdef double[:] analysis_one( unsigned char [:, :] image_original, double [:, :] thermogram):
+# def analysis(image_original, thermogram):
+    cdef int i, j, w, h
+    cdef double avg_temp[2]
 
-    list_t = []
-    list_p_r = []
+    h = image_original.shape[0]
+    w = image_original.shape[1]
 
-    for k in xrange(0, max_value):
-        for j in xrange(0, h):
-            for i in xrange(0, mid_x):
-                if image_original[j, i] == k:
-                    list_t.append(thermogram[j][i])
-        list_p_r.append(sum(list_t)/len(list_t))
+    th, image_umbral = cv2.threshold(np.asarray(image_original), 1, 255, cv2.THRESH_BINARY)
+    image_umbral = np.asarray(image_umbral)
+    image_labeled = mc.etiquetado(image_umbral)
 
-    t_right = sum(list_p_r)/len(list_p_r)
+    list_r = []
+    list_l = []
 
-    list_t = []
-    list_p_l = []
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_labeled[j, i] == 1:
+                list_r.append(thermogram[j][i])
+            if image_labeled[j, i] == 2:
+                list_l.append(thermogram[j][i])
 
-    for k in xrange(0, max_value):
-        for j in xrange(0, h):
-            for i in xrange(mid_x, w):
-                if image_original[j, i] == k:
-                    list_t.append(thermogram[j][i])
-        list_p_l.append(sum(list_t)/len(list_t))
+    t_right = sum(list_r)/len(list_r)
+    t_left = sum(list_l)/len(list_l)
 
-    t_left = sum(list_p_l)/len(list_p_l)
+    avg_temp[0] = t_right
+    avg_temp[1] = t_left
 
-    output[0] = t_right
-    output[1] = t_left
-
-    return output
+    return avg_temp

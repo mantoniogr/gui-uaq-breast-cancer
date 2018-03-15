@@ -8,7 +8,7 @@ functions.pyx
 
 author: Marco Garduno
 mail: mgarduno01@alumnos.uaq.mx
-last modified: February 2018
+last modified: 14 March 2018
 '''
 
 import cv2
@@ -180,7 +180,8 @@ cpdef unsigned char[:,:] watershed(unsigned char [:,:] ime):
 # def watershed(ime):
     cdef int i, j, w, h, k, l, m, n
 
-    # ime = fc.negative_gray(ime)
+    ime = fc.negative_gray(ime)
+    ime = cv2.GaussianBlur(np.asarray(ime), (3,3), 0)
 
     h = ime.shape[0]
     w = ime.shape[1]
@@ -228,7 +229,7 @@ cpdef unsigned char[:,:] watershed(unsigned char [:,:] ime):
                                 fifoj[ime[k, l]].append([k, l])
         i = i + 1
 
-    # ims = fc.negative_gray(ims)
+    ims = fc.negative_gray(ims)
 
     # return ims, imwl
     return ims

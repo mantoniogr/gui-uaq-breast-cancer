@@ -7,14 +7,15 @@ UAQ Thermo Breast Cancer
 main.py
 
 author: Marco Garduno
-mail: mgarduno01@alumnos.uaq.mx
-last modified: February 2018
+email: mgarduno01@alumnos.uaq.mx
+last modified: 14 March 2018
 '''
 
 import wx
 import cv2
 import numpy as np
 import math
+import time
 
 from fpdf import FPDF
 
@@ -29,8 +30,9 @@ ID_TERMO = 3
 ID_ROI = 4
 ID_THRES = 5
 ID_SEG = 6
-ID_ANAL = 7
+ID_ANAL1 = 7
 ID_RES = 8
+ID_ANAL2 = 9
 
 cropping = False
 refPt = []
@@ -128,6 +130,7 @@ class Example(wx.Frame):
         self.image_black = None
         self.path = None
         self.t_r = None
+        self.name = "Maria Isabel Sanchez Tinajero"
 
         # Configuration File .txt
         self.file = open("config.txt","r")
@@ -155,14 +158,15 @@ class Example(wx.Frame):
         qmi = wx.MenuItem(fileMenu, ID_EXIT, '&Quit\tCtrl+Q')
         fileMenu.Append(qmi)
 
-        editMenu.Append(ID_TERMO, '&Thermogram')
-        editMenu.Append(ID_ROI, '&ROI')
-        editMenu.Append(ID_THRES, '&Threshold')
+        editMenu.Append(ID_TERMO, '&1 Thermogram')
+        editMenu.Append(ID_ROI, '&2 ROI')
+        editMenu.Append(ID_THRES, '&3 Threshold')
 
-        diagMenu.Append(ID_SEG, '&Segmentation')
-        diagMenu.Append(ID_ANAL, '&Analysis')
+        # diagMenu.Append(ID_SEG, '&4 Segmentation')
+        diagMenu.Append(ID_ANAL1, '&4 Analysis One')
+        diagMenu.Append(ID_ANAL2, '&5 Analysis Two')
 
-        resMenu.Append(ID_RES, '&Results')
+        resMenu.Append(ID_RES, '&6 Results')
 
         helpMenu.Append(ID_ABOUT, '&About')
 
@@ -177,8 +181,9 @@ class Example(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnRoi, id=ID_ROI)
         self.Bind(wx.EVT_MENU, self.OnThreshold, id=ID_THRES)
 
-        self.Bind(wx.EVT_MENU, self.OnSegmentation, id=ID_SEG)
-        self.Bind(wx.EVT_MENU, self.OnAnalysis, id=ID_ANAL)
+        # self.Bind(wx.EVT_MENU, self.OnSegmentation, id=ID_SEG)
+        self.Bind(wx.EVT_MENU, self.OnAnalysisOne, id=ID_ANAL1)
+        self.Bind(wx.EVT_MENU, self.OnAnalysisTwo, id=ID_ANAL2)
 
         self.Bind(wx.EVT_MENU, self.OnResults, id=ID_RES)
 
@@ -193,7 +198,7 @@ class Example(wx.Frame):
         # Window parameters
         self.SetSize((500, 80))
         self.SetTitle('UAQ Thermo Breast Cancer')
-        self.Centre()
+        # self.Centre()
         self.Show(True)
 
         self.statusbar = self.CreateStatusBar()
@@ -216,6 +221,7 @@ class Example(wx.Frame):
 
         if self.path:
             self.image = cv2.imread(self.path, 0)
+            self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
             cv2.imshow("Image", self.image)
 
             shape = self.image.shape
@@ -244,6 +250,7 @@ class Example(wx.Frame):
         self.statusbar.SetStatusText("Seleccionar Termograma")
         if self.path:
             self.image = cv2.imread(self.path, 0)
+            self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
             cv2.imshow("Image", self.image)
 
             shape = self.image.shape
@@ -333,8 +340,9 @@ class Example(wx.Frame):
 
                 self.statusbar.SetStatusText('Eliminando fondo...')
                 th, image_umbral = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-                image_closing = mc.closing(image_umbral, 3)
-                image_umbral = np.asarray(image_closing)
+                # image_closing = mc.closing(image_umbral, 1)
+                # image_umbral = np.asarray(image_closing)
+                image_umbral = np.asarray(image_umbral)
                 image_crop = fc.crop_roi(self.image_original, image_umbral)
                 self.image = np.asarray(image_crop)
 
@@ -377,6 +385,7 @@ class Example(wx.Frame):
 
         self.statusbar.SetStatusText('Listo')
 
+    '''
     def OnSegmentation(self, e):
         self.statusbar.SetStatusText('Realizando segmentacion...')
         # self.image, waterlines = mc.watershed(self.image)
@@ -384,11 +393,12 @@ class Example(wx.Frame):
         self.image = np.asarray(watershed)
         cv2.imshow('Image', self.image)
         self.statusbar.SetStatusText('Listo')
+    '''
 
-    def OnAnalysis(self, e):
+    def OnAnalysisOne(self, e):
         self.statusbar.SetStatusText('Analizando imagen...')
         shape = self.image.shape
-        self.t_right, self.t_left = fc.analysis(self.image, self.t_r)
+        self.t_right, self.t_left = fc.analysis_one(self.image, self.t_r)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(self.image, " %.2f C" % self.t_right, (shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
         cv2.putText(self.image, " %.2f C" % self.t_left , (2*shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
@@ -400,40 +410,66 @@ class Example(wx.Frame):
         else:
             wx.MessageBox('DIFERENCIA DE TEMPERATURA ANORMAL', 'Warning', wx.OK | wx.ICON_WARNING)
 
+    def OnAnalysisTwo(self, e):
+        self.statusbar.SetStatusText('Realizando segmentacion...')
+        # self.image, waterlines = mc.watershed(self.image)
+        watershed = fc.analysis_two(self.image, self.t_r)
+        self.image = np.asarray(watershed)
+        cv2.imshow('Image', self.image)
+        self.statusbar.SetStatusText('Listo')
+
     def OnResults(self, e):
         class PDF(FPDF):
             def header(self):
                 self.image('images/uaq.png', 10, 8, 25)
                 self.image('images/ingenieria.png', 155, 8, 20)
                 self.image('images/enfermeria.png', 177, 8, 30)
-                self.set_font('Times', 'B', 15)
+                self.add_font('DejaVu', '', r'fonts/DejaVuSans-Bold.ttf', uni=True)
+                self.set_font('DejaVu', '', 13)
                 self.cell(80)
                 # fpdf.cell(w, h = 0, txt = '', border = 0, ln = 0, align = '', fill = False, link = '')
-                self.cell(30, 10, 'Universidad Autonoma de Queretaro', border=0, ln = 2, align='C')
-                self.cell(30, 10, 'campus San Juan del Rio', border=0, ln = 2, align='C')
-                pdf.set_font('Times', '', 12)
-                self.cell(30, 10, 'Hallazgos Termograficos', border=0, ln = 2, align='C')
+                self.cell(30, 10, "Universidad Autónoma de Querétaro", border=0, ln = 2, align='C')
+                self.cell(30, 10, 'campus San Juan del Río', border=0, ln = 2, align='C')
+                self.add_font('DejaVu', '', r'fonts/DejaVuCondensed.ttf', uni=True)
+                pdf.set_font('DejaVu', '', 11)
+                self.cell(30, 10, 'Hallazgos Termográficos', border=0, ln = 2, align='C')
                 self.ln(20)
 
-        cv2.imwrite("images/temp.png", self.image)
+        # img_temp = fc.negative_gray(self.image)
+        img_temp = cv2.applyColorMap(self.image, cv2.COLORMAP_JET)
+        cv2.imwrite("images/temp.png", np.asarray(img_temp))
         self.statusbar.SetStatusText('Generando resultados...')
+
+        # ori_temp = fc.negative_gray(self.image_original)
+        ori_temp = cv2.applyColorMap(self.image_original, cv2.COLORMAP_JET)
+        cv2.imwrite("images/ori.png", np.asarray(ori_temp))
 
         pdf = PDF('P', 'mm', 'Letter')
         pdf.add_page()
-        pdf.set_font('Times', '', 12)
-        pdf.cell(30, 10, 'Analisis de Termograma', border=0, ln = 2, align='L')
-        pdf.image('images/temp.png', x=68, y=75, w=100)
-        pdf.ln(90)
-        pdf.cell(30, 10, 'La temperatura promedio del seno derecho es de %.2f C.' % self.t_right, border=0, ln = 2, align='L')
-        pdf.cell(30, 10, 'La temperatura promedio del seno izquierdo es de %.2f C.' % self.t_left, border=0, ln = 2, align='L')
-        pdf.ln(20)
-        pdf.cell(30, 10, 'El diferencial de temperaturas de es de %.2f C.' % abs(self.t_left-self.t_right), border=0, ln = 2, align='L')
-        pdf.ln(20)
-        if abs(self.t_left-self.t_right) < 1:
+        pdf.add_font('DejaVu', '', r'fonts/DejaVuMono.ttf', uni=True)
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(30, 10, 'Análisis de Termograma', border=0, ln = 0, align='L')
+        pdf.cell(0, 10, 'Fecha: ' + time.strftime("%d/%m/%y"), border=0, ln = 1, align='R')
+        pdf.cell(30, 10, 'Voluntaria: ' + self.name, border=0, ln = 2, align='L')
+        pdf.image('images/ori.png', x=12, y=82, w=90)
+        pdf.image('images/temp.png', x=114, y=82, w=90)
+
+        pdf.ln(80)
+
+        pdf.cell(30, 10, "Resultado", border=0, ln = 2, align='L')
+        pdf.cell(30, 10, 'La temperatura promedio del seno derecho es de %.2f °C.' % self.t_right, border=0, ln = 2, align='L')
+        pdf.cell(30, 10, 'La temperatura promedio del seno izquierdo es de %.2f °C.' % self.t_left, border=0, ln = 2, align='L')
+        pdf.ln(10)
+        pdf.cell(30, 10, 'El diferencial de temperaturas (ΔT) de es de %.2f °C. El rango considerado normal es ΔT < 1 °C. ' % abs(self.t_left-self.t_right), border=0, ln = 2, align='L')
+        pdf.ln(10)
+        if abs(self.t_left - self.t_right) < 1:
             pdf.cell(30, 10, "SIN HALLAZGOS", border=0, ln = 2, align='L')
         else:
             pdf.cell(30, 10, "DIFERENCIA DE TEMPERATURA ANORMAL", border=0, ln = 2, align='L')
-            pdf.ln(20)
+        pdf.ln(10)
+
+        pdf.cell(30, 10, "NOTA: La termografía no sustituye el ultrasonido ni la mastografía.", border=0, ln = 2, align='L')
+
         pdf.output(self.path[0:len(self.path)-4] + ".pdf", 'F')
 
         self.statusbar.SetStatusText('Listo')

@@ -1,12 +1,15 @@
-#!/usr/bin/env
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-#
-#  morphology.py
-#  imgproc_python
-#
-#  Created by Marco Garduno on 19/02/18.
-#  Copyright 2018 Marco Garduno. All rights reserved.
-#
+'''
+UAQ Thermo Breast Cancer
+
+morphology.py
+
+author: Marco Garduno
+email: mgarduno01@alumnos.uaq.mx
+last modified: 14 March 2018
+'''
 
 import cv2
 import numpy as np
