@@ -1,0 +1,7 @@
+1. Instalar Python 2.7.x
+2. Instalar OpenCV 3.4.2
+3. Instalar wxPython (pip install wxpython)
+4. Instalar fpdf (pip install fpdf)
+5. Instalar cython (pip install cython)
+6. Instalar Microsoft Visual C++ Compiler for Python 2.7
+7. Compilar archivos de cython (python setup.py build_ext --inplace)
