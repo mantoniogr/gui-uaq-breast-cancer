@@ -182,9 +182,11 @@ cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :]
     th, image_umbral = cv2.threshold(np.asarray(image_original), 1, 255, cv2.THRESH_BINARY)
     image_umbral = np.asarray(image_umbral)
     image_labeled = mc.etiquetado(image_umbral)
+    image_etiquetada = np.asarray(image_labeled)
+    cv2.imwrite("0.png", image_etiquetada)
 
-    th, image_r = cv2.threshold(np.asarray(image_labeled), 1, 1, cv2.THRESH_BINARY)
-    th, image_l = cv2.threshold(np.asarray(image_labeled), 2, 2, cv2.THRESH_BINARY)
+    th, image_r = cv2.threshold(np.asarray(image_labeled), 0, 1, cv2.THRESH_BINARY)
+    th, image_l = cv2.threshold(np.asarray(image_labeled), 1, 2, cv2.THRESH_BINARY)
     cv2.imwrite("1.png", image_r)
     cv2.imwrite("2.png", image_l)
 

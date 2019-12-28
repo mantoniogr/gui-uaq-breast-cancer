@@ -59,6 +59,7 @@ class Example(wx.Frame):
         self.path = None
         self.t_r = None
         self.name = "Ana Maria Trejo Chavez"
+        self.regions = None
 
         # Configuration File .txt
         self.file = open("config.txt","r")
@@ -149,7 +150,7 @@ class Example(wx.Frame):
 
         if self.path:
             self.image = cv2.imread(self.path, 0)
-            self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
+            # self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
             cv2.imshow("Image", self.image)
 
             shape = self.image.shape
@@ -178,7 +179,7 @@ class Example(wx.Frame):
         self.statusbar.SetStatusText("Seleccionar Termograma")
         if self.path:
             self.image = cv2.imread(self.path, 0)
-            self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
+            # self.image = cv2.resize(self.image, (0,0), fx=0.5, fy=0.5)
             cv2.imshow("Image", self.image)
 
             shape = self.image.shape
@@ -273,6 +274,7 @@ class Example(wx.Frame):
                 image_umbral = np.asarray(image_umbral)
                 image_crop = fc.crop_roi(self.image_original, image_umbral)
                 self.image = np.asarray(image_crop)
+                self.regions = np.asarray(image_crop)
 
                 cv2.imshow('Image', self.image)
                 self.statusbar.SetStatusText('Listo')
@@ -341,7 +343,7 @@ class Example(wx.Frame):
     def OnAnalysisTwo(self, e):
         self.statusbar.SetStatusText('Realizando segmentacion...')
         # self.image, waterlines = mc.watershed(self.image)
-        watershed = fc.analysis_two(self.image, self.t_r)
+        watershed = fc.analysis_two(self.regions, self.t_r)
         self.image = np.asarray(watershed)
         cv2.imshow('Image', self.image)
         self.statusbar.SetStatusText('Listo')
