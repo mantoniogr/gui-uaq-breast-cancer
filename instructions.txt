@@ -1,3 +1,21 @@
+Version 0.2
+1. Install Python 2.8.x (32 bits)
+2. pip install opencv
+3. pip install wxpython
+4. pip install fpdf
+5. pip install cython
+6. Install Microsoft Build Tools
+6.1 Main C++ characteristics
+6.2 Main Buil Tools characteristics
+6.3 C++ 2019 Redistribuitable
+6.4 MSVC v140 - VS 2015 C++ Build Tools (v14.00)
+6.5 SDK Windows Universal CRT
+6.6 C execution time environment Windows Universal 
+6.7 Windows 10 SDK
+6.8 Copy rc.exe and rddll.dll from C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64 to C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin 
+7. Compile cython files (python setup.py build_ext --inplace)
+
+Version 0.1
 1. Instalar Python 2.7.x
 2. Instalar OpenCV 3.4.2
 3. Instalar wxPython (pip install wxpython)

@@ -75,9 +75,9 @@ class Thermogram(wx.Dialog):
         self.t_max = self.tx2.GetValue()
 
         if(self.t_min > self.t_max):
-            print "Error"
+            print ("Error")
         elif(float(self.t_min) < 0):
-            print "Error"
+            print ("Error")
         else:
             file = open("config.txt","w")
             file.write("T_MIN\n")
