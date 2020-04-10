@@ -5,7 +5,7 @@ Version 0.2
 3. pip install wxpython
 4. pip install fpdf
 5. pip install cython
-6. Install Microsoft Visual C++ Redistributable para Visual Studio 2015, 2017 and 2019
+6. Install Microsoft Visual C++ Redistributable for Visual Studio 2015, 2017 and 2019
 7. Install Microsoft Build Tools
 	7.1 MSVC v140 - VS 2015 C++ Build Tools (v14.00)
 	7.2 SDK de Windows Universal CRT

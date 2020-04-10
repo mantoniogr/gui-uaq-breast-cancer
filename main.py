@@ -8,7 +8,7 @@ main.py
 
 author: Marco Garduno
 email: mgarduno01@alumnos.uaq.mx
-last modified: 15 March 2018
+last modified: 10 April 2020
 '''
 
 import wx

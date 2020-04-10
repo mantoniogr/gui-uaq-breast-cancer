@@ -8,15 +8,10 @@ main.py
 
 author: Marco Garduno
 email: mgarduno01@alumnos.uaq.mx
-last modified: 14 March 2018
+last modified: 10 April 2020
 '''
 
 import wx
-import cv2
-import numpy as np
-import math
-import time
-
 import cv2
 import numpy as np
 import math
@@ -293,10 +288,11 @@ class Example(wx.Frame):
         while(1):
             k = cv2.waitKey(33)
 
-            value = cv2.getTrackbarPos('Umbral','Image')
+            value = cv2.getTrackbarPos('Umbral', 'Image')
             th, image_umbral = cv2.threshold(self.image, value, 255, cv2.THRESH_BINARY)
             image_add = cv2.add(self.image, image_umbral)
-            cv2.imshow('Image', image_add)
+            # cv2.imshow('Image', image_add)
+            cv2.imshow('Image', image_umbral)
 
             if k == 13 or k == 32 or k==27:
                 break
@@ -330,8 +326,8 @@ class Example(wx.Frame):
         shape = self.image.shape
         self.t_right, self.t_left = fc.analysis_one(self.image, self.t_r)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(self.image, " %.2f C" % self.t_right, (shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
-        cv2.putText(self.image, " %.2f C" % self.t_left , (2*shape[1]/3, shape[0]/5), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(self.image, " %.2f C" % self.t_right, (int(shape[1]/3.), int(shape[0]/5.)), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
+        cv2.putText(self.image, " %.2f C" % self.t_left , (int(2*shape[1]/3.), int(shape[0]/5.)), font, 0.6, (255,255,255), 2, cv2.LINE_AA)
         cv2.imshow('Image', self.image)
         self.statusbar.SetStatusText('Listo')
 
