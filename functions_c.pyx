@@ -138,6 +138,25 @@ cpdef unsigned char[:,:] threshold_2(unsigned char [:,:] image, int T):
     return img
 
 @cython.boundscheck(False)
+cpdef unsigned char[:,:] threshold_3(unsigned char [:,:] image, int T1):
+# def threshold_2(image, int T1, int T2):
+    cdef int i, j, w, h
+
+    h = image.shape[0]
+    w = image.shape[1]
+
+    img = np.copy(image)
+
+    for j in range(0, h):
+        for i in  range(0, w):
+            if image[j, i] == T1:
+                img[j, i] = 255
+            else:
+                img[j, i] = 0
+
+    return img
+
+@cython.boundscheck(False)
 cpdef unsigned char[:,:] chest_removal(unsigned char [:,:] image_original):
 # def chest_removal(image_original):
     cdef int i, j, w, h
@@ -182,15 +201,38 @@ cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :]
     th, image_umbral = cv2.threshold(np.asarray(image_original), 1, 255, cv2.THRESH_BINARY)
     image_umbral = np.asarray(image_umbral)
     image_labeled = mc.etiquetado(image_umbral)
+
     image_etiquetada = np.asarray(image_labeled)
     cv2.imwrite("0.png", image_etiquetada)
 
-    th, image_r = cv2.threshold(np.asarray(image_labeled), 0, 1, cv2.THRESH_BINARY)
-    th, image_l = cv2.threshold(np.asarray(image_labeled), 1, 2, cv2.THRESH_BINARY)
-    cv2.imwrite("1.png", image_r)
-    cv2.imwrite("2.png", image_l)
+    image_r = threshold_3(np.asarray(image_labeled), 1)
+    image_l = threshold_3(np.asarray(image_labeled), 2)
 
-    return avg_temp
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_r[j, i] == 255:
+                image_r[j,i] = image_original[j,i]
+            else:
+                image_r[j,i] = 0
+
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_l[j, i] == 255:
+                image_l[j,i] = image_original[j,i]
+            else:
+                image_l[j,i] = 0
+
+    image_l = mc.watershed(image_l)
+    image_r = mc.watershed(image_r)
+
+    image_derecha = np.asarray(image_r)
+    image_izquierda = np.asarray(image_l)
+    cv2.imwrite("1.png", image_derecha)
+    cv2.imwrite("2.png", image_izquierda)
+
+    image_final = np.asarray(image_r)
+
+    return image_final
 
 @cython.boundscheck(False)
 cpdef double[:] analysis_one( unsigned char [:, :] image_original, double [:, :] thermogram):

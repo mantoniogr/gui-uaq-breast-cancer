@@ -270,6 +270,7 @@ class Example(wx.Frame):
                 image_crop = fc.crop_roi(self.image_original, image_umbral)
                 self.image = np.asarray(image_crop)
                 self.regions = np.asarray(image_crop)
+                cv2.imwrite("-1.png", self.regions)
 
                 cv2.imshow('Image', self.image)
                 self.statusbar.SetStatusText('Listo')
