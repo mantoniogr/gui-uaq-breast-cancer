@@ -190,7 +190,7 @@ cpdef unsigned char[:,:] chest_removal(unsigned char [:,:] image_original):
     return img
 
 @cython.boundscheck(False)
-cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :] thermogram):
+cpdef unsigned char[:,:] analysis_two( unsigned char [:, :] image_original, double [:, :] thermogram):
 # def analysis(image_original, thermogram):
     cdef int i, j, w, h
     cdef double avg_temp[2]
@@ -199,14 +199,14 @@ cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :]
     w = image_original.shape[1]
 
     th, image_umbral = cv2.threshold(np.asarray(image_original), 1, 255, cv2.THRESH_BINARY)
-    image_umbral = np.asarray(image_umbral)
+    # image_umbral = np.asarray(image_umbral)
     image_labeled = mc.etiquetado(image_umbral)
 
-    image_etiquetada = np.asarray(image_labeled)
-    cv2.imwrite("0.png", image_etiquetada)
+    # image_etiquetada = np.asarray(image_labeled)
+    # cv2.imwrite("0.png", image_etiquetada)
 
-    image_r = threshold_3(np.asarray(image_labeled), 1)
-    image_l = threshold_3(np.asarray(image_labeled), 2)
+    image_r = threshold_3(image_labeled, 1)
+    image_l = threshold_3(image_labeled, 2)
 
     for j in range(0, h):
         for i in range(0, w):
@@ -222,17 +222,79 @@ cpdef double[:] analysis_two( unsigned char [:, :] image_original, double [:, :]
             else:
                 image_l[j,i] = 0
 
-    image_l = mc.watershed(image_l)
-    image_r = mc.watershed(image_r)
+    image_wl = mc.watershed(image_l)
+    image_wr = mc.watershed(image_r)
 
-    image_derecha = np.asarray(image_r)
-    image_izquierda = np.asarray(image_l)
-    cv2.imwrite("1.png", image_derecha)
-    cv2.imwrite("2.png", image_izquierda)
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_r[j, i] == 0:
+                image_wr[j,i] = 0
 
-    image_final = np.asarray(image_r)
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_l[j, i] == 0:
+                image_wl[j,i] = 0
 
-    return image_final
+    lista = [0] * (np.amax(image_wl[1:h-1,1:w-1])+1)
+    counter = [0] * (np.amax(image_wl[1:h-1,1:w-1])+1)
+    average = [0] * (np.amax(image_wl[1:h-1,1:w-1])+1)
+
+    for j in range(0, h):
+        for i in range(0, w):
+            lista[image_wl[j,i]] += thermogram[j,i]
+            counter[image_wl[j,i]] += 1
+
+    for i in range(0, np.amax(image_wl[1:h-1,1:w-1])+1):
+        average[i] = lista[i]/counter[i]
+        # print(average[i])
+
+    print(average.index(max(average)))
+
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_wl[j, i] == average.index(max(average)):
+                image_l[j,i] = 255
+
+    ######### Right Side ###########
+
+    lista = [0] * (np.amax(image_wr[1:h-1,1:w-1])+1)
+    counter = [0] * (np.amax(image_wr[1:h-1,1:w-1])+1)
+    average = [0] * (np.amax(image_wr[1:h-1,1:w-1])+1)
+
+    for j in range(0, h):
+        for i in range(0, w):
+            lista[image_wr[j,i]] += thermogram[j,i]
+            counter[image_wr[j,i]] += 1
+
+    for i in range(0, np.amax(image_wr[1:h-1,1:w-1])+1):
+        average[i] = lista[i]/counter[i]
+        # print(average[i])
+
+    print(average.index(max(average)))
+
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_wr[j, i] == average.index(max(average)):
+                image_r[j,i] = 255
+
+
+    # image_derecha = np.asarray(image_wr)
+    # image_izquierda = np.asarray(image_wl)
+    # cv2.imwrite("1.png", image_derecha)
+    # cv2.imwrite("2.png", image_izquierda)
+
+    image_w = image_l
+
+    for j in range(0, h):
+        for i in range(0, w):
+            if image_r[j,i] != 0:
+                image_w[j,i] = image_r[j,i]
+            if image_l[j,i] != 0:
+                image_w[j,i] = image_w[j,i]
+            else:
+                image_w[j,i] = 0
+
+    return image_w
 
 @cython.boundscheck(False)
 cpdef double[:] analysis_one( unsigned char [:, :] image_original, double [:, :] thermogram):

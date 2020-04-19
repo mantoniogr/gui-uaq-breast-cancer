@@ -232,7 +232,7 @@ cpdef unsigned char[:,:] watershed(unsigned char [:,:] ime):
     ims = fc.negative_gray(ims)
 
     # return ims, imwl
-    return ims
+    return imwl
 
 @cython.boundscheck(False)
 cpdef unsigned char[:,:] etiquetado(unsigned char [:,:] img):
